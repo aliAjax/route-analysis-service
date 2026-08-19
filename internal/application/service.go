@@ -110,12 +110,12 @@ func (s *Service) ActivateIncident(ctx context.Context, id model.IncidentID, dat
 		if item.ID == id {
 			item.Status = model.IncidentActive
 			if updateErr := s.repo.UpdateIncident(ctx, item, expected); updateErr != nil {
-				return fmt.Errorf("activate incident %s: %v", id, updateErr)
+				return fmt.Errorf("activate incident %s: %w", id, updateErr)
 			}
 			return nil
 		}
 	}
-	return fmt.Errorf("incident %s: %v", id, memory.ErrNotFound)
+	return fmt.Errorf("incident %s: %w", id, memory.ErrNotFound)
 }
 func (s *Service) ListIncidents(ctx context.Context, id model.DatasetID) ([]model.Incident, error) {
 	return s.repo.ListIncidents(ctx, id)

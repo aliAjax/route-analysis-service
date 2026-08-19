@@ -150,10 +150,10 @@ func (s *Store) UpdateIncident(_ context.Context, i model.Incident, expected int
 	defer s.mu.Unlock()
 	current, ok := s.incidents[i.DatasetID][i.ID]
 	if !ok {
-		return fmt.Errorf("incident %s: %v", i.ID, ErrNotFound)
+		return fmt.Errorf("incident %s: %w", i.ID, ErrNotFound)
 	}
 	if current.Version != expected {
-		return fmt.Errorf("incident %s: %v", i.ID, ErrConflict)
+		return fmt.Errorf("incident %s: %w", i.ID, ErrConflict)
 	}
 	i.Version = current.Version + 1
 	s.incidents[i.DatasetID][i.ID] = cloneIncident(i)
