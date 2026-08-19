@@ -2,11 +2,13 @@ package application
 
 import (
 	"context"
+	"math"
 
 	"github.com/example/route-analysis-service/internal/domain/analytics"
 	"github.com/example/route-analysis-service/internal/domain/export"
 	"github.com/example/route-analysis-service/internal/domain/geocode"
 	"github.com/example/route-analysis-service/internal/domain/model"
+	"github.com/example/route-analysis-service/internal/domain/routing"
 )
 
 func (s *Service) GetDataset(ctx context.Context, id model.DatasetID) (model.Dataset, error) {
@@ -39,7 +41,33 @@ func (s *Service) NearestNode(ctx context.Context, id model.DatasetID, point mod
 	if err != nil {
 		return "", 0, err
 	}
-	return snapshot.Nearest(point, mode)
+	min := math.Inf(1)
+	var chosen model.NodeID
+	for nodeID, node := range snapshot.Nodes {
+		if len(snapshot.Outgoing[nodeID]) == 0 {
+			continue
+		}
+		valid := false
+		for _, edge := range snapshot.Outgoing[nodeID] {
+			for _, supported := range edge.Modes {
+				if supported == mode {
+					valid = true
+				}
+			}
+		}
+		if !valid {
+			continue
+		}
+		distance := point.DistanceMeters(node.Location)
+		if distance < min {
+			min = distance
+			chosen = nodeID
+		}
+	}
+	if chosen == "" {
+		return "", 0, routing.ErrNoRoute
+	}
+	return chosen, min, nil
 }
 
 // ClusterNodes groups dataset nodes into geographic clusters.
