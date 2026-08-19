@@ -21,9 +21,13 @@ func NewDispatcher(workers int) *Dispatcher {
 // Run invokes fn for every input, bounded by the configured worker count, and
 // returns the number of successful invocations. Cancellation stops scheduling.
 func (d *Dispatcher) Run(ctx context.Context, inputs []string, fn func(context.Context, string) error) (int, error) {
+	if err := ctx.Err(); err != nil {
+		return 0, err
+	}
 	inputsCh := make(chan string)
 	var wg sync.WaitGroup
 	var success int64
+	var mu sync.Mutex
 	var firstErr error
 	sem := make(chan struct{}, d.workers)
 	workerFn := func() {
@@ -36,6 +40,7 @@ func (d *Dispatcher) Run(ctx context.Context, inputs []string, fn func(context.C
 			}
 			err := fn(ctx, input)
 			<-sem
+			mu.Lock()
 			if err != nil {
 				if firstErr == nil {
 					firstErr = err
@@ -43,16 +48,15 @@ func (d *Dispatcher) Run(ctx context.Context, inputs []string, fn func(context.C
 			} else {
 				success++
 			}
+			mu.Unlock()
 			if ctx.Err() != nil {
 				return
 			}
 		}
 	}
 	for i := 0; i < d.workers; i++ {
-		go func() {
-			wg.Add(1)
-			workerFn()
-		}()
+		wg.Add(1)
+		go workerFn()
 	}
 loop:
 	for _, input := range inputs {

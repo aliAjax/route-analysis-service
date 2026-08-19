@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"sync"
 
 	"github.com/example/route-analysis-service/internal/domain/analytics"
 	"github.com/example/route-analysis-service/internal/domain/model"
@@ -14,10 +15,19 @@ func (s *Service) ValidateDatasetsBatch(ctx context.Context, ids []model.Dataset
 	if len(ids) == 0 {
 		return map[model.DatasetID]analytics.Report{}, nil
 	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	results := make(map[model.DatasetID]analytics.Report, len(ids))
+	var mu sync.Mutex
 	dispatcher := worker.NewDispatcher(4)
 	_, err := dispatcher.Run(ctx, datasetIDsToStrings(ids), func(ctx context.Context, raw string) error {
+		if callbackErr := ctx.Err(); callbackErr != nil {
+			return callbackErr
+		}
 		report, validateErr := s.ValidateDataset(ctx, model.DatasetID(raw))
+		mu.Lock()
+		defer mu.Unlock()
 		results[model.DatasetID(raw)] = report
 		return validateErr
 	})
