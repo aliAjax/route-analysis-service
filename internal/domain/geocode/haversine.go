@@ -21,19 +21,17 @@ func BearingDegrees(a, b model.Point) float64 {
 	return math.Mod(math.Atan2(y, x)*180/math.Pi+360, 360)
 }
 
-// Destination returns the point reached by travelling distance meters from p
-// along the given bearing in degrees.
-var distanceScratch []float64
-
 // Distances returns the great-circle distance from origin to each point.
 func Distances(origin model.Point, points []model.Point) []float64 {
-	distanceScratch = distanceScratch[:0]
+	out := make([]float64, 0, len(points))
 	for _, point := range points {
-		distanceScratch = append(distanceScratch, DistanceMeters(origin, point))
+		out = append(out, DistanceMeters(origin, point))
 	}
-	return distanceScratch
+	return out
 }
 
+// Destination returns the point reached by travelling distance meters from p
+// along the given bearing in degrees.
 func Destination(p model.Point, bearingDegrees, meters float64) model.Point {
 	radius := 6371000.0
 	lat1 := p.Lat * math.Pi / 180

@@ -13,8 +13,6 @@ type Cluster struct {
 }
 
 // ClusterNodes greedily groups nodes whose pairwise distance is at most radius.
-var nodeScratch []model.NodeID
-
 func ClusterNodes(nodes map[model.NodeID]model.Point, radiusMeters float64) []Cluster {
 	if radiusMeters <= 0 {
 		radiusMeters = 500
@@ -33,23 +31,23 @@ func ClusterNodes(nodes map[model.NodeID]model.Point, radiusMeters float64) []Cl
 		if !remaining[seed] {
 			continue
 		}
-		nodeScratch = nodeScratch[:0]
-		nodeScratch = append(nodeScratch, seed)
+		clusterNodes := make([]model.NodeID, 0)
+		clusterNodes = append(clusterNodes, seed)
 		latSum, lonSum := nodes[seed].Lat, nodes[seed].Lon
 		for _, candidate := range ids {
 			if candidate == seed || !remaining[candidate] {
 				continue
 			}
 			if DistanceMeters(nodes[seed], nodes[candidate]) <= radiusMeters {
-				nodeScratch = append(nodeScratch, candidate)
+				clusterNodes = append(clusterNodes, candidate)
 				latSum += nodes[candidate].Lat
 				lonSum += nodes[candidate].Lon
 				remaining[candidate] = false
 			}
 		}
 		remaining[seed] = false
-		n := float64(len(nodeScratch))
-		cluster := Cluster{Nodes: nodeScratch, Centroid: model.Point{Lat: latSum / n, Lon: lonSum / n}}
+		n := float64(len(clusterNodes))
+		cluster := Cluster{Nodes: clusterNodes, Centroid: model.Point{Lat: latSum / n, Lon: lonSum / n}}
 		clusters = append(clusters, cluster)
 	}
 	return clusters
