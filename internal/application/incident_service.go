@@ -28,20 +28,18 @@ func (s *Service) IncidentConflicts(ctx context.Context, id model.DatasetID, at 
 
 // ResolveExpiredIncidents moves expired active incidents to resolved and
 // persists each change back through the repository.
-func (s *Service) ResolveExpiredIncidents(ctx context.Context, id model.DatasetID, at time.Time) (ids []model.IncidentID, err error) {
-	items, listErr := s.repo.ListIncidents(ctx, id)
-	if listErr != nil {
-		return nil, listErr
+func (s *Service) ResolveExpiredIncidents(ctx context.Context, id model.DatasetID, at time.Time) ([]model.IncidentID, error) {
+	items, err := s.repo.ListIncidents(ctx, id)
+	if err != nil {
+		return nil, err
 	}
-	changed, resolvedIDs, resolveErr := incident.ResolveExpired(items, at)
-	if resolveErr != nil {
-		return nil, resolveErr
+	changed, ids, err := incident.ResolveExpired(items, at)
+	if err != nil {
+		return nil, err
 	}
-	ids = resolvedIDs
-	defer func() { ids = append(ids, resolvedIDs...) }()
 	for _, item := range changed {
-		if updateErr := s.repo.UpdateIncident(ctx, item, item.Version); updateErr != nil {
-			return ids, updateErr
+		if err := s.repo.UpdateIncident(ctx, item, item.Version); err != nil {
+			return ids, err
 		}
 	}
 	return ids, nil
