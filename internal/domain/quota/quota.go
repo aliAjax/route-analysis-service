@@ -37,8 +37,8 @@ func NewEvaluator(now func() time.Time) *Evaluator {
 		now = time.Now
 	}
 	return &Evaluator{
-		budgets: nil,
-		limits:  nil,
+		budgets: map[string]*Budget{},
+		limits:  map[string]*RateLimiter{},
 		policy:  map[string]Policy{},
 		now:     now,
 	}
@@ -50,9 +50,18 @@ func (e *Evaluator) Register(policy Policy) error {
 		return err
 	}
 	now := e.now()
+	if e.policy == nil {
+		e.policy = map[string]Policy{}
+	}
 	e.policy[policy.Tenant] = policy
+	if e.budgets == nil {
+		e.budgets = map[string]*Budget{}
+	}
 	if _, ok := e.budgets[policy.Tenant]; !ok {
 		e.budgets[policy.Tenant] = NewBudget(policy.RequestCap, policy.Window, now)
+	}
+	if e.limits == nil {
+		e.limits = map[string]*RateLimiter{}
 	}
 	if _, ok := e.limits[policy.Tenant]; !ok {
 		e.limits[policy.Tenant] = NewRateLimiter(policy.RateLimit, policy.Window)

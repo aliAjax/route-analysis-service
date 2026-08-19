@@ -19,9 +19,6 @@ func NewBudget(limit int64, window time.Duration, now time.Time) *Budget {
 	if limit < 0 {
 		limit = 0
 	}
-	if limit == 0 {
-		return nil
-	}
 	if window <= 0 {
 		window = time.Hour
 	}
@@ -32,6 +29,9 @@ var ErrBudgetExceeded = errors.New("quota budget exceeded")
 
 // Consume reserves one unit if the budget still has capacity.
 func (b *Budget) Consume(at time.Time) error {
+	if b == nil {
+		return ErrBudgetExceeded
+	}
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if !at.Before(b.resetAt) {

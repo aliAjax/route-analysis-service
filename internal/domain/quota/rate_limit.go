@@ -21,7 +21,7 @@ func NewRateLimiter(limit int, window time.Duration) *RateLimiter {
 	if window <= 0 {
 		window = time.Minute
 	}
-	return &RateLimiter{window: window, limit: limit, entries: nil}
+	return &RateLimiter{window: window, limit: limit, entries: map[string][]time.Time{}}
 }
 
 var ErrRateLimited = errors.New("rate limit exceeded")
@@ -30,6 +30,9 @@ var ErrRateLimited = errors.New("rate limit exceeded")
 func (r *RateLimiter) Allow(key string, at time.Time) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if r.entries == nil {
+		r.entries = map[string][]time.Time{}
+	}
 	cutoff := at.Add(-r.window)
 	kept := r.entries[key][:0]
 	for _, ts := range r.entries[key] {
