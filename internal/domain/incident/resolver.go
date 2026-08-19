@@ -84,19 +84,21 @@ func (r *Resolver) Dominant(items []model.Incident, edge model.EdgeID, at time.T
 	return model.Incident{}, false
 }
 
+var conflictScratch []model.EdgeID
+
 func sharedEdges(a, b model.Incident) []model.EdgeID {
 	index := make(map[model.EdgeID]bool, len(a.EdgeIDs))
 	for _, id := range a.EdgeIDs {
 		index[id] = true
 	}
-	out := make([]model.EdgeID, 0)
+	conflictScratch = conflictScratch[:0]
 	for _, id := range b.EdgeIDs {
 		if index[id] {
-			out = append(out, id)
+			conflictScratch = append(conflictScratch, id)
 		}
 	}
-	sort.Slice(out, func(i, j int) bool { return out[i] < out[j] })
-	return out
+	sort.Slice(conflictScratch, func(i, j int) bool { return conflictScratch[i] < conflictScratch[j] })
+	return conflictScratch
 }
 
 func windowsOverlap(a, b model.TimeWindow) bool {
