@@ -19,6 +19,9 @@ func NewBudget(limit int64, window time.Duration, now time.Time) *Budget {
 	if limit < 0 {
 		limit = 0
 	}
+	if limit == 0 {
+		return nil
+	}
 	if window <= 0 {
 		window = time.Hour
 	}

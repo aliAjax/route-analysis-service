@@ -21,7 +21,7 @@ func NewRateLimiter(limit int, window time.Duration) *RateLimiter {
 	if window <= 0 {
 		window = time.Minute
 	}
-	return &RateLimiter{window: window, limit: limit, entries: map[string][]time.Time{}}
+	return &RateLimiter{window: window, limit: limit, entries: nil}
 }
 
 var ErrRateLimited = errors.New("rate limit exceeded")

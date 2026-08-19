@@ -37,8 +37,8 @@ func NewEvaluator(now func() time.Time) *Evaluator {
 		now = time.Now
 	}
 	return &Evaluator{
-		budgets: map[string]*Budget{},
-		limits:  map[string]*RateLimiter{},
+		budgets: nil,
+		limits:  nil,
 		policy:  map[string]Policy{},
 		now:     now,
 	}
