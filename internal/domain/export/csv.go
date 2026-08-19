@@ -3,7 +3,6 @@ package export
 import (
 	"bytes"
 	"encoding/csv"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -13,9 +12,7 @@ import (
 func (r Report) ToCSV() ([]byte, error) {
 	var buffer bytes.Buffer
 	writer := csv.NewWriter(&buffer)
-	for i := range r.Sections {
-		section := r.Sections[i]
-		sort.Slice(section.Rows, func(a, b int) bool { return section.Rows[a][0] < section.Rows[b][0] })
+	for _, section := range r.Sections {
 		if err := writer.Write([]string{"[section:" + section.Name + "]"}); err != nil {
 			return nil, err
 		}

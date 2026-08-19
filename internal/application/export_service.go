@@ -17,19 +17,13 @@ func (s *Service) BuildNetworkReport(ctx context.Context, id model.DatasetID) (e
 	}
 	summary := export.SummariseNetwork(nodes, edges)
 	report := export.NewReport(newID("rep"), "Network quality report", export.ReportNetworkQuality, id)
-	rows := make([][]string, 0, 8)
-	rows = append(rows, []string{"metric", "value"})
-	rows = append(rows, []string{"nodes", fmt.Sprintf("%d", summary.Nodes)})
-	rows = append(rows, []string{"edges", fmt.Sprintf("%d", summary.Edges)})
-	rows = append(rows, []string{"toll_edges", fmt.Sprintf("%d", summary.TollEdges)})
-	report.AddSection(export.Section{Name: "network", Rows: rows, Totals: map[string]any{"max_slope": summary.MaxSlope}})
-	rows = rows[:0]
-	rows = append(rows, []string{"mode"})
-	rows = append(rows, []string{"drive"})
-	rows = append(rows, []string{"bike"})
-	rows = append(rows, []string{"walk"})
-	rows = append(rows, []string{"transit"})
-	report.AddSection(export.Section{Name: "modes", Rows: rows})
+	report.AddSection(export.Section{Name: "network", Rows: [][]string{
+		{"metric", "value"},
+		{"nodes", fmt.Sprintf("%d", summary.Nodes)},
+		{"edges", fmt.Sprintf("%d", summary.Edges)},
+		{"toll_edges", fmt.Sprintf("%d", summary.TollEdges)},
+	}, Totals: map[string]any{"max_slope": summary.MaxSlope}})
+	report.AddSection(export.Section{Name: "modes", Rows: [][]string{{"mode"}, {"drive"}, {"bike"}, {"walk"}, {"transit"}}})
 	return report, nil
 }
 
@@ -40,16 +34,12 @@ func (s *Service) BuildIncidentReport(ctx context.Context, id model.DatasetID) (
 		return export.Report{}, err
 	}
 	report := export.NewReport(newID("rep"), "Incident log", export.ReportIncidentLog, id)
-	rows := make([][]string, 0, 8)
-	rows = append(rows, []string{"incident", "status", "priority", "edges"})
+	rows := [][]string{{"incident", "status", "priority", "edges"}}
 	for _, item := range items {
 		rows = append(rows, []string{string(item.ID), string(item.Status), fmt.Sprintf("%d", item.Priority), fmt.Sprintf("%d", len(item.EdgeIDs))})
 	}
 	report.AddSection(export.Section{Name: "incidents", Rows: rows, Totals: map[string]any{"count": len(items)}})
-	rows = rows[:0]
-	rows = append(rows, []string{"total"})
-	rows = append(rows, []string{fmt.Sprintf("%d", len(items))})
-	report.AddSection(export.Section{Name: "summary", Rows: rows})
+	report.AddSection(export.Section{Name: "summary", Rows: [][]string{{"total"}, {fmt.Sprintf("%d", len(items))}}})
 	return report, nil
 }
 
