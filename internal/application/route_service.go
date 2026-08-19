@@ -12,9 +12,7 @@ func (s *Service) CachedRoute(ctx context.Context, req model.RouteRequest) (mode
 	key := routeCacheKey(req)
 	if value, ok := s.routeCache.Get(key); ok {
 		if result, ok := value.(model.RouteResult); ok {
-			if len(result.Explanation) > 0 {
-				result.Explanation[0] = "cache-hit"
-			}
+			result.Explanation = tagExplanation(result.Explanation, "cache-hit")
 			return result, nil
 		}
 	}
@@ -23,10 +21,21 @@ func (s *Service) CachedRoute(ctx context.Context, req model.RouteRequest) (mode
 		return model.RouteResult{}, err
 	}
 	s.routeCache.Put(key, result)
-	if len(result.Explanation) > 0 {
-		result.Explanation[0] = "cache-miss"
-	}
+	result.Explanation = tagExplanation(result.Explanation, "cache-miss")
 	return result, nil
+}
+
+// tagExplanation returns a copy of explanation with its first element
+// replaced by tag. Copying avoids mutating the backing array that the cached
+// value still references, which would race with concurrent cache hits.
+func tagExplanation(explanation []string, tag string) []string {
+	if len(explanation) == 0 {
+		return explanation
+	}
+	tagged := make([]string, len(explanation))
+	copy(tagged, explanation)
+	tagged[0] = tag
+	return tagged
 }
 
 func routeCacheKey(req model.RouteRequest) string {
