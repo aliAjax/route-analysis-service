@@ -23,17 +23,7 @@ func (h *Handler) incidentConflicts(w http.ResponseWriter, r *http.Request) {
 		at = parsed
 	}
 	conflicts, err := h.service.IncidentConflicts(r.Context(), id, at)
-	if err != nil {
-		respond(w, nil, err)
-		return
-	}
-	var shared []model.EdgeID
-	for i := range conflicts {
-		shared = shared[:0]
-		shared = append(shared, conflicts[i].EdgeIDs...)
-		conflicts[i].EdgeIDs = shared
-	}
-	respond(w, conflicts, nil)
+	respond(w, conflicts, err)
 }
 
 func (h *Handler) resolveExpiredIncidents(w http.ResponseWriter, r *http.Request) {

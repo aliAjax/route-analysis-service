@@ -84,21 +84,26 @@ func (r *Resolver) Dominant(items []model.Incident, edge model.EdgeID, at time.T
 	return model.Incident{}, false
 }
 
-var conflictScratch []model.EdgeID
+// Clone returns a deep copy of the conflict so callers cannot mutate shared
+// backing arrays.
+func (c Conflict) Clone() Conflict {
+	c.EdgeIDs = append([]model.EdgeID(nil), c.EdgeIDs...)
+	return c
+}
 
 func sharedEdges(a, b model.Incident) []model.EdgeID {
 	index := make(map[model.EdgeID]bool, len(a.EdgeIDs))
 	for _, id := range a.EdgeIDs {
 		index[id] = true
 	}
-	conflictScratch = conflictScratch[:0]
+	out := make([]model.EdgeID, 0)
 	for _, id := range b.EdgeIDs {
 		if index[id] {
-			conflictScratch = append(conflictScratch, id)
+			out = append(out, id)
 		}
 	}
-	sort.Slice(conflictScratch, func(i, j int) bool { return conflictScratch[i] < conflictScratch[j] })
-	return conflictScratch
+	sort.Slice(out, func(i, j int) bool { return out[i] < out[j] })
+	return out
 }
 
 func windowsOverlap(a, b model.TimeWindow) bool {
