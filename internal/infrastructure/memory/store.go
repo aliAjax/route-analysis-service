@@ -3,6 +3,7 @@ package memory
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sort"
 	"sync"
 
@@ -135,7 +136,7 @@ func (s *Store) CreateIncident(_ context.Context, i model.Incident) error {
 		s.incidents[i.DatasetID] = map[model.IncidentID]model.Incident{}
 	}
 	if _, ok := s.incidents[i.DatasetID][i.ID]; ok {
-		return ErrConflict
+		return fmt.Errorf("incident %s: %v", i.ID, ErrConflict)
 	}
 	i.Version = 1
 	s.incidents[i.DatasetID][i.ID] = cloneIncident(i)
@@ -149,10 +150,10 @@ func (s *Store) UpdateIncident(_ context.Context, i model.Incident, expected int
 	defer s.mu.Unlock()
 	current, ok := s.incidents[i.DatasetID][i.ID]
 	if !ok {
-		return ErrNotFound
+		return fmt.Errorf("incident %s: %v", i.ID, ErrNotFound)
 	}
 	if current.Version != expected {
-		return ErrConflict
+		return fmt.Errorf("incident %s: %v", i.ID, ErrConflict)
 	}
 	i.Version = current.Version + 1
 	s.incidents[i.DatasetID][i.ID] = cloneIncident(i)

@@ -9,6 +9,7 @@ import (
 	"github.com/example/route-analysis-service/internal/domain/incident"
 	"github.com/example/route-analysis-service/internal/domain/model"
 	"github.com/example/route-analysis-service/internal/domain/ports"
+	"github.com/example/route-analysis-service/internal/infrastructure/memory"
 	"github.com/example/route-analysis-service/internal/domain/quota"
 	"github.com/example/route-analysis-service/internal/domain/routing"
 	"github.com/example/route-analysis-service/internal/infrastructure/cache"
@@ -108,10 +109,13 @@ func (s *Service) ActivateIncident(ctx context.Context, id model.IncidentID, dat
 	for _, item := range incidents {
 		if item.ID == id {
 			item.Status = model.IncidentActive
-			return s.repo.UpdateIncident(ctx, item, expected)
+			if updateErr := s.repo.UpdateIncident(ctx, item, expected); updateErr != nil {
+				return fmt.Errorf("activate incident %s: %v", id, updateErr)
+			}
+			return nil
 		}
 	}
-	return errors.New("incident not found")
+	return fmt.Errorf("incident %s: %v", id, memory.ErrNotFound)
 }
 func (s *Service) ListIncidents(ctx context.Context, id model.DatasetID) ([]model.Incident, error) {
 	return s.repo.ListIncidents(ctx, id)
