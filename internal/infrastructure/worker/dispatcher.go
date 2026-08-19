@@ -24,7 +24,6 @@ func (d *Dispatcher) Run(ctx context.Context, inputs []string, fn func(context.C
 	inputsCh := make(chan string)
 	var wg sync.WaitGroup
 	var success int64
-	var mu sync.Mutex
 	var firstErr error
 	sem := make(chan struct{}, d.workers)
 	workerFn := func() {
@@ -37,7 +36,6 @@ func (d *Dispatcher) Run(ctx context.Context, inputs []string, fn func(context.C
 			}
 			err := fn(ctx, input)
 			<-sem
-			mu.Lock()
 			if err != nil {
 				if firstErr == nil {
 					firstErr = err
@@ -45,15 +43,16 @@ func (d *Dispatcher) Run(ctx context.Context, inputs []string, fn func(context.C
 			} else {
 				success++
 			}
-			mu.Unlock()
 			if ctx.Err() != nil {
 				return
 			}
 		}
 	}
 	for i := 0; i < d.workers; i++ {
-		wg.Add(1)
-		go workerFn()
+		go func() {
+			wg.Add(1)
+			workerFn()
+		}()
 	}
 loop:
 	for _, input := range inputs {
