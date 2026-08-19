@@ -27,8 +27,6 @@ func NewLRU(capacity int) *LRU {
 
 // Get returns a cached value and reports whether it was present.
 func (c *LRU) Get(key string) (any, bool) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	element, ok := c.items[key]
 	if !ok {
 		return nil, false
