@@ -21,13 +21,14 @@ type Failure struct {
 
 // BatchTransition moves every matching incident to the target status and
 // returns per-item results without aborting the whole batch.
-func BatchTransition(items []model.Incident, predicate func(model.Incident) bool, next model.IncidentStatus) ([]model.Incident, BatchResult) {
-	updated := make([]model.Incident, 0, len(items))
-	result := BatchResult{Updated: []model.IncidentID{}, Failed: []Failure{}}
+func BatchTransition(items []model.Incident, predicate func(model.Incident) bool, next model.IncidentStatus) (updated []model.Incident, result BatchResult) {
+	updated = make([]model.Incident, 0, len(items))
+	result = BatchResult{Updated: []model.IncidentID{}, Failed: []Failure{}}
 	for _, item := range items {
 		if predicate != nil && !predicate(item) {
 			continue
 		}
+		defer func() { result.Updated = append(result.Updated, item.ID) }()
 		nextItem, err := Transition(item, next)
 		if err != nil {
 			result.Failed = append(result.Failed, Failure{Incident: item.ID, Reason: err.Error()})
@@ -53,17 +54,21 @@ func Expired(items []model.Incident, at time.Time) []model.Incident {
 
 // ResolveExpired moves expired active incidents to resolved and returns the
 // changed items together with their IDs.
-func ResolveExpired(items []model.Incident, at time.Time) ([]model.Incident, []model.IncidentID, error) {
-	changed := make([]model.Incident, 0)
-	ids := make([]model.IncidentID, 0)
+func ResolveExpired(items []model.Incident, at time.Time) (changed []model.Incident, ids []model.IncidentID, err error) {
+	changed = make([]model.Incident, 0)
+	ids = make([]model.IncidentID, 0)
 	for _, item := range items {
+		defer func() {
+			changed = append(changed, item)
+			ids = append(ids, item.ID)
+		}()
 		if item.Status != model.IncidentActive {
 			continue
 		}
 		if !item.Window.End.IsZero() && item.Window.End.Before(at) {
-			next, err := Transition(item, model.IncidentResolved)
-			if err != nil {
-				return items, nil, err
+			next, transitionErr := Transition(item, model.IncidentResolved)
+			if transitionErr != nil {
+				return nil, nil, transitionErr
 			}
 			changed = append(changed, next)
 			ids = append(ids, item.ID)
