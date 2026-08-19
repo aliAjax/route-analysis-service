@@ -14,6 +14,7 @@ type Repository interface {
 	CreateIncident(context.Context, model.Incident) error
 	UpdateIncident(context.Context, model.Incident, int64) error
 	ListIncidents(context.Context, model.DatasetID) ([]model.Incident, error)
+	GetIncident(context.Context, model.DatasetID, model.IncidentID) (model.Incident, error)
 	CreateJob(context.Context, model.AnalysisJob) error
 	UpdateJob(context.Context, model.AnalysisJob) error
 	GetJob(context.Context, model.JobID) (model.AnalysisJob, error)

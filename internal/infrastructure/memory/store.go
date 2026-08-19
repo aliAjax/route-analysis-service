@@ -136,7 +136,7 @@ func (s *Store) CreateIncident(_ context.Context, i model.Incident) error {
 		s.incidents[i.DatasetID] = map[model.IncidentID]model.Incident{}
 	}
 	if _, ok := s.incidents[i.DatasetID][i.ID]; ok {
-		return fmt.Errorf("incident %s: %v", i.ID, ErrConflict)
+		return fmt.Errorf("incident %s: %w", i.ID, ErrConflict)
 	}
 	i.Version = 1
 	s.incidents[i.DatasetID][i.ID] = cloneIncident(i)
@@ -150,10 +150,10 @@ func (s *Store) UpdateIncident(_ context.Context, i model.Incident, expected int
 	defer s.mu.Unlock()
 	current, ok := s.incidents[i.DatasetID][i.ID]
 	if !ok {
-		return fmt.Errorf("incident %s: %v", i.ID, ErrNotFound)
+		return fmt.Errorf("incident %s: %w", i.ID, ErrNotFound)
 	}
 	if current.Version != expected {
-		return fmt.Errorf("incident %s: %v", i.ID, ErrConflict)
+		return fmt.Errorf("incident %s: %w", i.ID, ErrConflict)
 	}
 	i.Version = current.Version + 1
 	s.incidents[i.DatasetID][i.ID] = cloneIncident(i)
@@ -169,6 +169,17 @@ func (s *Store) ListIncidents(_ context.Context, id model.DatasetID) ([]model.In
 	sort.Slice(out, func(a, b int) bool { return out[a].Priority > out[b].Priority })
 	return out, nil
 }
+func (s *Store) GetIncident(_ context.Context, dataset model.DatasetID, id model.IncidentID) (model.Incident, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	incidents := s.incidents[dataset]
+	item, ok := incidents[id]
+	if !ok {
+		return model.Incident{}, fmt.Errorf("incident %s: %w", id, ErrNotFound)
+	}
+	return cloneIncident(item), nil
+}
+
 func (s *Store) CreateJob(_ context.Context, j model.AnalysisJob) error {
 	if err := j.Validate(); err != nil {
 		return err

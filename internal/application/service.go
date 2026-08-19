@@ -102,20 +102,19 @@ func (s *Service) CreateIncident(ctx context.Context, incident model.Incident) (
 	return incident, nil
 }
 func (s *Service) ActivateIncident(ctx context.Context, id model.IncidentID, dataset model.DatasetID, expected int64) error {
-	incidents, err := s.repo.ListIncidents(ctx, dataset)
+	item, err := s.repo.GetIncident(ctx, dataset, id)
 	if err != nil {
 		return err
 	}
-	for _, item := range incidents {
-		if item.ID == id {
-			item.Status = model.IncidentActive
-			if updateErr := s.repo.UpdateIncident(ctx, item, expected); updateErr != nil {
-				return fmt.Errorf("activate incident %s: %v", id, updateErr)
-			}
-			return nil
-		}
+	if item.Version != expected {
+		return fmt.Errorf("incident %s: %w", id, memory.ErrConflict)
 	}
-	return fmt.Errorf("incident %s: %v", id, memory.ErrNotFound)
+	item.Status = model.IncidentActive
+	return s.repo.UpdateIncident(ctx, item, expected)
+}
+
+func (s *Service) GetIncident(ctx context.Context, dataset model.DatasetID, id model.IncidentID) (model.Incident, error) {
+	return s.repo.GetIncident(ctx, dataset, id)
 }
 func (s *Service) ListIncidents(ctx context.Context, id model.DatasetID) ([]model.Incident, error) {
 	return s.repo.ListIncidents(ctx, id)
