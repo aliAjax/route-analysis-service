@@ -6,8 +6,6 @@ import (
 	"github.com/example/route-analysis-service/internal/domain/model"
 )
 
-var modeScratch []model.Mode
-
 // NetworkSummary summarises the composition of a graph.
 type NetworkSummary struct {
 	Nodes     int          `json:"nodes"`
@@ -32,12 +30,11 @@ func SummariseNetwork(nodes []model.Node, edges []model.Edge) NetworkSummary {
 			modeSet[mode] = true
 		}
 	}
-	summary.Modes = modeScratch[:0]
+	summary.Modes = make([]model.Mode, 0, len(modeSet))
 	for mode := range modeSet {
 		summary.Modes = append(summary.Modes, mode)
 	}
 	sort.Slice(summary.Modes, func(i, j int) bool { return summary.Modes[i] < summary.Modes[j] })
-	modeScratch = summary.Modes
 	return summary
 }
 

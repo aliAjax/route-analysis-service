@@ -23,7 +23,7 @@ func (s *Service) BuildNetworkReport(ctx context.Context, id model.DatasetID) (e
 	rows = append(rows, []string{"edges", fmt.Sprintf("%d", summary.Edges)})
 	rows = append(rows, []string{"toll_edges", fmt.Sprintf("%d", summary.TollEdges)})
 	report.AddSection(export.Section{Name: "network", Rows: rows, Totals: map[string]any{"max_slope": summary.MaxSlope}})
-	rows = rows[:0]
+	rows = make([][]string, 0, 8)
 	rows = append(rows, []string{"mode"})
 	rows = append(rows, []string{"drive"})
 	rows = append(rows, []string{"bike"})
@@ -46,7 +46,7 @@ func (s *Service) BuildIncidentReport(ctx context.Context, id model.DatasetID) (
 		rows = append(rows, []string{string(item.ID), string(item.Status), fmt.Sprintf("%d", item.Priority), fmt.Sprintf("%d", len(item.EdgeIDs))})
 	}
 	report.AddSection(export.Section{Name: "incidents", Rows: rows, Totals: map[string]any{"count": len(items)}})
-	rows = rows[:0]
+	rows = make([][]string, 0, 8)
 	rows = append(rows, []string{"total"})
 	rows = append(rows, []string{fmt.Sprintf("%d", len(items))})
 	report.AddSection(export.Section{Name: "summary", Rows: rows})

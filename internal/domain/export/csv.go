@@ -15,11 +15,13 @@ func (r Report) ToCSV() ([]byte, error) {
 	writer := csv.NewWriter(&buffer)
 	for i := range r.Sections {
 		section := r.Sections[i]
-		sort.Slice(section.Rows, func(a, b int) bool { return section.Rows[a][0] < section.Rows[b][0] })
+		rows := make([][]string, len(section.Rows))
+		copy(rows, section.Rows)
+		sort.Slice(rows, func(a, b int) bool { return rows[a][0] < rows[b][0] })
 		if err := writer.Write([]string{"[section:" + section.Name + "]"}); err != nil {
 			return nil, err
 		}
-		for _, row := range section.Rows {
+		for _, row := range rows {
 			if err := writer.Write(row); err != nil {
 				return nil, err
 			}
