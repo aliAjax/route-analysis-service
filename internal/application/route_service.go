@@ -12,21 +12,26 @@ func (s *Service) CachedRoute(ctx context.Context, req model.RouteRequest) (mode
 	key := routeCacheKey(req)
 	if value, ok := s.routeCache.Get(key); ok {
 		if result, ok := value.(model.RouteResult); ok {
-			if len(result.Explanation) > 0 {
-				result.Explanation[0] = "cache-hit"
-			}
-			return result, nil
+			return cloneRouteResult(result), nil
 		}
 	}
 	result, err := s.Route(ctx, req)
 	if err != nil {
 		return model.RouteResult{}, err
 	}
-	s.routeCache.Put(key, result)
-	if len(result.Explanation) > 0 {
-		result.Explanation[0] = "cache-miss"
+	copied := cloneRouteResult(result)
+	s.routeCache.Put(key, copied)
+	return cloneRouteResult(copied), nil
+}
+
+func cloneRouteResult(in model.RouteResult) model.RouteResult {
+	out := in
+	out.Legs = append([]model.RouteLeg(nil), in.Legs...)
+	out.Explanation = append([]string(nil), in.Explanation...)
+	for i := range out.Legs {
+		out.Legs[i].IncidentIDs = append([]model.IncidentID(nil), in.Legs[i].IncidentIDs...)
 	}
-	return result, nil
+	return out
 }
 
 func routeCacheKey(req model.RouteRequest) string {
