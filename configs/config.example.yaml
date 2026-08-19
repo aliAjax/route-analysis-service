@@ -1,0 +1,6 @@
+http:
+  address: ":8084"
+storage:
+  driver: memory
+analysis:
+  worker_count: 1

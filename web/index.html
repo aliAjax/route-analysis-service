@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Route Analysis Console</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header><h1>Route Analysis Console</h1><p>Versioned time-dependent road-network analysis</p></header>
+  <main>
+    <section class="panel">
+      <h2>Compute a route</h2>
+      <form id="route-form">
+        <label>Dataset <input name="datasetId" value="demo-city"></label>
+        <label>From <input name="from" value="A"></label>
+        <label>To <input name="to" value="D"></label>
+        <label>Mode
+          <select name="mode"><option>drive</option><option>bike</option><option>walk</option><option>transit</option></select>
+        </label>
+        <label>Departure <input name="departure" type="datetime-local"></label>
+        <button type="submit">Run</button>
+      </form>
+      <pre id="route-output">No route computed yet.</pre>
+    </section>
+    <section class="panel">
+      <h2>Dataset catalog</h2>
+      <button id="refresh-datasets">Refresh</button>
+      <pre id="dataset-output"></pre>
+    </section>
+  </main>
+  <footer>Pure demo console; no map UI.</footer>
+  <script src="/app.js"></script>
+</body>
+</html>

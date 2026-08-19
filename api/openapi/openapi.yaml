@@ -1,0 +1,18 @@
+openapi: 3.0.3
+info:
+  title: Route Analysis Service
+  version: 1.0.0
+paths:
+  /api/v1/route:
+    post:
+      summary: Compute a time-dependent route
+      requestBody:
+        required: true
+      responses:
+        '200': { description: Route result }
+        '400': { description: Validation or routing failure }
+  /api/v1/jobs:
+    post:
+      summary: Submit a long-running analysis
+      responses:
+        '200': { description: Queued job }

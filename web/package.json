@@ -1,0 +1,13 @@
+{
+  "name": "route-analysis-service-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static route analysis console for the route analysis service",
+  "scripts": {
+    "start": "node server.js",
+    "build": "echo no build step"
+  },
+  "devDependencies": {
+    "serve": "^14.2.0"
+  }
+}
