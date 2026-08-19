@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -24,6 +25,7 @@ func (d *Dispatcher) Run(ctx context.Context, inputs []string, fn func(context.C
 	inputsCh := make(chan string)
 	var wg sync.WaitGroup
 	var success int64
+	var mu sync.Mutex
 	var firstErr error
 	sem := make(chan struct{}, d.workers)
 	workerFn := func() {
@@ -37,11 +39,13 @@ func (d *Dispatcher) Run(ctx context.Context, inputs []string, fn func(context.C
 			err := fn(ctx, input)
 			<-sem
 			if err != nil {
+				mu.Lock()
 				if firstErr == nil {
 					firstErr = err
 				}
+				mu.Unlock()
 			} else {
-				success++
+				atomic.AddInt64(&success, 1)
 			}
 			if ctx.Err() != nil {
 				return
@@ -49,10 +53,8 @@ func (d *Dispatcher) Run(ctx context.Context, inputs []string, fn func(context.C
 		}
 	}
 	for i := 0; i < d.workers; i++ {
-		go func() {
-			wg.Add(1)
-			workerFn()
-		}()
+		wg.Add(1)
+		go workerFn()
 	}
 loop:
 	for _, input := range inputs {
