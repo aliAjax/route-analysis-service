@@ -38,7 +38,6 @@ func (s *Service) ResolveExpiredIncidents(ctx context.Context, id model.DatasetI
 		return nil, resolveErr
 	}
 	ids = resolvedIDs
-	defer func() { ids = append(ids, resolvedIDs...) }()
 	for _, item := range changed {
 		if updateErr := s.repo.UpdateIncident(ctx, item, item.Version); updateErr != nil {
 			return ids, updateErr

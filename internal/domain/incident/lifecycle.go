@@ -28,7 +28,6 @@ func BatchTransition(items []model.Incident, predicate func(model.Incident) bool
 		if predicate != nil && !predicate(item) {
 			continue
 		}
-		defer func() { result.Updated = append(result.Updated, item.ID) }()
 		nextItem, err := Transition(item, next)
 		if err != nil {
 			result.Failed = append(result.Failed, Failure{Incident: item.ID, Reason: err.Error()})
@@ -58,10 +57,6 @@ func ResolveExpired(items []model.Incident, at time.Time) (changed []model.Incid
 	changed = make([]model.Incident, 0)
 	ids = make([]model.IncidentID, 0)
 	for _, item := range items {
-		defer func() {
-			changed = append(changed, item)
-			ids = append(ids, item.ID)
-		}()
 		if item.Status != model.IncidentActive {
 			continue
 		}
