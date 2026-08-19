@@ -83,6 +83,21 @@ func (d Dataset) Validate() error {
 	return nil
 }
 
+// DatasetTransition reports whether a dataset may move from one status to the
+// next.
+func DatasetTransition(from, to DatasetStatus) bool {
+	switch from {
+	case DatasetDraft:
+		return to == DatasetImporting
+	case DatasetImporting:
+		return to == DatasetFailed || to == DatasetArchived
+	case DatasetReady:
+		return to == DatasetArchived
+	default:
+		return false
+	}
+}
+
 type Node struct {
 	ID        NodeID            `json:"id"`
 	DatasetID DatasetID         `json:"datasetId"`
