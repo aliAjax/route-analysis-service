@@ -2,6 +2,7 @@ package routing
 
 import (
 	"container/heap"
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -236,13 +237,19 @@ func (s Snapshot) DegreeCentrality() map[model.NodeID]float64 {
 	}
 	return degrees
 }
-func (s Snapshot) Nearest(point model.Point, mode model.Mode) (model.NodeID, float64, error) {
+func (s Snapshot) Nearest(ctx context.Context, point model.Point, mode model.Mode) (model.NodeID, float64, error) {
+	if err := ctx.Err(); err != nil {
+		return "", 0, err
+	}
 	if !point.Valid() {
 		return "", 0, errors.New("invalid point")
 	}
 	min := math.Inf(1)
 	var chosen model.NodeID
 	for id, node := range s.Nodes {
+		if err := ctx.Err(); err != nil {
+			return "", 0, err
+		}
 		if len(s.Outgoing[id]) == 0 {
 			continue
 		}
