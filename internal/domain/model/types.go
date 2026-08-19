@@ -80,7 +80,20 @@ func (d Dataset) Validate() error {
 	if d.Version < 1 {
 		return errors.New("dataset version must be positive")
 	}
+	if !d.Status.Valid() {
+		return errors.New("invalid dataset status")
+	}
 	return nil
+}
+
+// Valid reports whether the dataset status is a known value.
+func (s DatasetStatus) Valid() bool {
+	switch s {
+	case "", DatasetDraft, DatasetImporting, DatasetReady, DatasetFailed, DatasetArchived:
+		return true
+	default:
+		return false
+	}
 }
 
 // DatasetTransition reports whether a dataset may move from one status to the
@@ -90,7 +103,7 @@ func DatasetTransition(from, to DatasetStatus) bool {
 	case DatasetDraft:
 		return to == DatasetImporting
 	case DatasetImporting:
-		return to == DatasetFailed || to == DatasetArchived
+		return to == DatasetReady || to == DatasetFailed || to == DatasetArchived
 	case DatasetReady:
 		return to == DatasetArchived
 	default:

@@ -115,15 +115,18 @@ func TopNodes(nodes []model.Node, edges []model.Edge, limit int) []model.NodeID 
 	return ids
 }
 // ValidateDatasetState reports whether a dataset status is allowed to run graph
-// validation. The production build returns nil unconditionally.
+// validation.
 func ValidateDatasetState(status model.DatasetStatus) error {
-	return nil
+	if DatasetValidationEligible(status) {
+		return nil
+	}
+	return fmt.Errorf("dataset %s is not ready for validation", status)
 }
 
 // DatasetValidationEligible reports whether graph validation is available for
 // the given status.
 func DatasetValidationEligible(status model.DatasetStatus) bool {
-	return true
+	return status == model.DatasetImporting || status == model.DatasetReady
 }
 
 func ValidateDemand(pairs []DemandPair) error {
